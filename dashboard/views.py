@@ -56,7 +56,8 @@ def getJobsList(request):
     employmentType = request.data.get('employmentType')
     searchRoleName = request.data.get('searchRoleName')
 
-    print(minimumSalary, employmentType, searchRoleName)
+    page_number = request.data.get('page_number', 1)
+    page_size = request.data.get('page_size', 10)
 
     filtered_jobs = [
         job
@@ -65,15 +66,21 @@ def getJobsList(request):
         and (not employmentType or  job['employmentType'] in employmentType)
         and (not searchRoleName or searchRoleName.lower() in job['roleName'].lower())
     ]
-    if(filtered_jobs == []):
+    
+    total_count = len(filtered_jobs)
+    start = (page_number - 1) * page_size
+    end = start + page_size
+    paginated_jobs = filtered_jobs[start:end]
+
+    if(paginated_jobs == [] and page_number == 1):
         return Response({
             "ErrorMessage":"No Data found"
         },
         status=  status.HTTP_204_NO_CONTENT)
 
     return Response({
-        "data_count":len(filtered_jobs),
-        "data":filtered_jobs
+        "total_count": total_count,
+        "data": paginated_jobs
         },
         status = status.HTTP_200_OK
     )
@@ -152,8 +159,7 @@ def getSimilarJobs(request):
 
     jobId = request.data.get('jobId')
     similarJobs = fetchSimilarJobs(jobId)
-    print('in main api',similarJobs)
-    
+
     return Response({
         "similarJobs": similarJobs
     },

@@ -4,8 +4,9 @@ import { BsStarFill, BsBriefcaseFill, BsBoxArrowUpRight } from 'react-icons/bs'
 import { MdLocationOn } from 'react-icons/md'
 import Header from '../Header'
 import { getToken } from '../../utils/token'
-import { BASE_URL } from '../../constants/apiConstants'
+import { Link } from 'react-router-dom'
 import './index.css'
+import { getJobDetails, getSimilarJobs } from '../../services/jobService'
 
 
 interface JobDetails {
@@ -20,21 +21,7 @@ interface JobDetails {
     roleName: string
     salary: number
     stars: number
-    skills: string[] // API says strings, but usually it's objects. Let's check apis.txt again.
-    // apis.txt: "skills":["HTML5", "CSS5", "Javascript", "React JS", "Redux"]
-    // Wait, the screenshot shows icons. The API response in apis.txt only shows strings.
-    // But usually in these projects (CCBP), skills have imageUrls.
-    // Let's assume strings for now as per apis.txt, but I might need to map them to icons or just display text.
-    // Actually, let's look at the screenshot. It shows icons.
-    // If the API only returns strings, I can't show icons unless I have a mapping.
-    // Let's check apis.txt again.
-    // Line 51: "skills":["HTML5", "CSS5", "Javascript", "React JS", "Redux"]
-    // Line 53: "lifeAtCompanyImageUrl": "image1"
-    // It seems the API documentation might be simplified.
-    // I'll stick to what the API returns. If it's strings, I'll just display strings.
-    // Or maybe I can use a default icon.
-    // Wait, I'll check if I can find a mapping or if I should just display text.
-    // I'll display text for now to be safe.
+    skills: string[]
 
     lifeAtCompanyDescription: string
     lifeAtCompanyImageUrl: string
@@ -42,11 +29,7 @@ interface JobDetails {
 }
 
 interface SimilarJob {
-    jobId: string // apis.txt says "jobid" (lowercase) in one place and "jobId" in another. I'll check the response.
-    // apis.txt line 71: "jobid":"xyz123"
-    // line 15: "jobId": "abc123"
-    // I'll handle both or check the actual response if possible.
-    // I'll assume camelCase "jobId" as per standard, but check for "jobid" if needed.
+    jobId: string
     roleName: string
     companyLogoUrl: string
     stars: number
@@ -73,50 +56,23 @@ const JobItemDetails = () => {
 
         try {
             // Fetch Job Details
-            const detailsResponse = await fetch(`${BASE_URL}/dashboard/get-job-details`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ token, jobId: id }),
-            })
-
-            if (detailsResponse.ok) {
-                const data = await detailsResponse.json()
-                if (data.data) {
-                    // Map API response to state
-                    // The API response structure in apis.txt:
-                    // { "jobId": ..., "skills": [...], "LifeAtCompanyDescription": ..., "LifeAtCompanyImageUrl": ... }
-                    // Note capitalization in apis.txt: "LifeAtCompanyDescription" vs "lifeAtCompanyDescription"
-                    // I'll handle potential case differences.
-                    const jobData = data.data
-                    setJobDetails({
-                        ...jobData,
-                        lifeAtCompanyDescription: jobData.LifeAtCompanyDescription || jobData.lifeAtCompanyDescription,
-                        lifeAtCompanyImageUrl: jobData.LifeAtCompanyImageUrl || jobData.lifeAtCompanyImageUrl,
-                    })
-                }
+            const data = await getJobDetails(token, id)
+            if (data.data) {
+                const jobData = data.data
+                setJobDetails({
+                    ...jobData,
+                    lifeAtCompanyDescription: jobData.LifeAtCompanyDescription || jobData.lifeAtCompanyDescription,
+                    lifeAtCompanyImageUrl: jobData.LifeAtCompanyImageUrl || jobData.lifeAtCompanyImageUrl,
+                })
             } else {
                 setError('Failed to load job details')
             }
 
             // Fetch Similar Jobs
-            const similarResponse = await fetch(`${BASE_URL}/dashboard/get-similar-jobs`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ token, jobId: id }),
-            })
-
-            if (similarResponse.ok) {
-                const data = await similarResponse.json()
-                if (data.similarJobs) {
-                    setSimilarJobs(data.similarJobs.map((job: any) => ({
-                        ...job,
-                        jobId: job.jobid || job.jobId // Handle case difference
-                    })))
-                }
+            const similarData = await getSimilarJobs(token, id)
+            // console.log('Similar jobs response:', similarData)
+            if (similarData.similarJobs) {
+                setSimilarJobs(similarData.similarJobs)
             }
 
         } catch (err) {
@@ -192,7 +148,7 @@ const JobItemDetails = () => {
                 <h1 className="similar-jobs-heading">Similar Jobs</h1>
                 <ul className="similar-jobs-list">
                     {similarJobs.map((job) => (
-                        <li className="similar-job-card" key={job.jobId}>
+                        <Link to={`/jobs/${job.jobId}`} className="similar-job-card" key={job.jobId}>
                             <div className="job-card-header">
                                 <img
                                     src={job.companyLogoUrl}
@@ -219,11 +175,11 @@ const JobItemDetails = () => {
                                     <p>{job.employmentType}</p>
                                 </div>
                             </div>
-                        </li>
+                        </Link>
                     ))}
                 </ul>
             </div>
-        </div>
+        </div >
     )
 }
 

@@ -4,9 +4,9 @@ import { BsSearch, BsStarFill, BsBriefcaseFill } from 'react-icons/bs'
 import { MdLocationOn } from 'react-icons/md'
 import Header from '../Header'
 import { getToken } from '../../utils/token'
-import { BASE_URL } from '../../constants/apiConstants'
 import { getUserData } from '../../services/authService'
 import './index.css'
+import { getJobsList } from '../../services/jobService'
 
 const employmentTypesList = [
     { label: 'Full Time', employmentTypeId: 'Full Time' },
@@ -44,7 +44,7 @@ interface UserProfile {
 
 const Jobs = () => {
     const [jobs, setJobs] = useState<Job[]>([])
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
     const [searchInput, setSearchInput] = useState('')
     const [activeEmploymentTypes, setActiveEmploymentTypes] = useState<string[]>([])
     const [activeSalaryRange, setActiveSalaryRange] = useState<string>('')
@@ -78,31 +78,15 @@ const Jobs = () => {
     const getJobs = async () => {
         setIsLoading(true)
         const token = getToken()
-        const url = `${BASE_URL}/dashboard/get-jobs-list`
-        const options = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                token,
-                minimumSalary: activeSalaryRange ? parseInt(activeSalaryRange) : undefined,
-                employmentType: activeEmploymentTypes.length > 0 ? activeEmploymentTypes : undefined,
-                searchRoleName: searchInput,
-            }),
-        }
+        const minimumSalary = activeSalaryRange ? parseInt(activeSalaryRange) : undefined
+        const employmentType = activeEmploymentTypes.length > 0 ? activeEmploymentTypes : undefined
+        const searchRoleName = searchInput
 
         try {
-            const response = await fetch(url, options)
-            if (response.ok) {
-                const data = await response.json()
-                if (data.data) {
-                    setJobs(data.data)
-                } else {
-                    setJobs([])
-                }
+            const data = await getJobsList(token, minimumSalary, employmentType, searchRoleName, 1, 10)
+            if (data.data) {
+                setJobs(data.data)
             } else {
-                console.error('Failed to fetch jobs')
                 setJobs([])
             }
         } catch (error) {

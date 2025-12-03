@@ -62,7 +62,6 @@ def fetchSimilarJobs(job_id):
     """
     try:
         current_job = Job.objects.get(job_id=job_id)
-        print("current_job", current_job)
     except Job.DoesNotExist:
         return []
 
