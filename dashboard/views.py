@@ -50,27 +50,22 @@ def getJobsList(request):
             status = status.HTTP_400_BAD_REQUEST
         )
 
-    jobsList = fetchJobsListFromDB()
-
     minimumSalary = request.data.get('minimumSalary')
     employmentType = request.data.get('employmentType')
     searchRoleName = request.data.get('searchRoleName')
 
     page_number = request.data.get('page_number', 1)
     page_size = request.data.get('page_size', 10)
-
-    filtered_jobs = [
-        job
-        for job in jobsList
-        if (minimumSalary is None or job['salary'] >= minimumSalary)
-        and (not employmentType or  job['employmentType'] in employmentType)
-        and (not searchRoleName or searchRoleName.lower() in job['roleName'].lower())
-    ]
     
-    total_count = len(filtered_jobs)
-    start = (page_number - 1) * page_size
-    end = start + page_size
-    paginated_jobs = filtered_jobs[start:end]
+    offset = (page_number - 1) * page_size
+
+    total_count, paginated_jobs = fetchJobsListFromDB(
+        min_salary=minimumSalary,
+        employment_type=employmentType,
+        search_role_name=searchRoleName,
+        limit=page_size,
+        offset=offset
+    )
 
     if(paginated_jobs == [] and page_number == 1):
         return Response({

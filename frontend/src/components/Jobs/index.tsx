@@ -50,14 +50,23 @@ const Jobs = () => {
     const [activeSalaryRange, setActiveSalaryRange] = useState<string>('')
     const [profile, setProfile] = useState<UserProfile | null>(null)
 
+    const [activePage, setActivePage] = useState(1)
+    const [totalPages, setTotalPages] = useState(0)
+    const pageSize = 10
+
     useEffect(() => {
         getProfile()
         getJobs()
     }, [])
 
     useEffect(() => {
+        setActivePage(1)
         getJobs()
     }, [activeEmploymentTypes, activeSalaryRange])
+
+    useEffect(() => {
+        getJobs()
+    }, [activePage])
 
     const getProfile = async () => {
         try {
@@ -83,21 +92,25 @@ const Jobs = () => {
         const searchRoleName = searchInput
 
         try {
-            const data = await getJobsList(token, minimumSalary, employmentType, searchRoleName, 1, 10)
+            const data = await getJobsList(token, minimumSalary, employmentType, searchRoleName, activePage, pageSize)
             if (data.data) {
                 setJobs(data.data)
+                setTotalPages(Math.ceil(data.total_count / pageSize))
             } else {
                 setJobs([])
+                setTotalPages(0)
             }
         } catch (error) {
             console.error('Error fetching jobs', error)
             setJobs([])
+            setTotalPages(0)
         }
         setIsLoading(false)
     }
 
     const onSearchEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
+            setActivePage(1)
             getJobs()
         }
     }
@@ -113,6 +126,44 @@ const Jobs = () => {
 
     const onChangeSalaryRange = (event: ChangeEvent<HTMLInputElement>) => {
         setActiveSalaryRange(event.target.value)
+    }
+
+    const renderPagination = () => {
+        if (totalPages <= 1) return null
+
+        const pageNumbers = []
+        // Show previous 2, current, next 2
+        for (let i = Math.max(1, activePage - 2); i <= Math.min(totalPages, activePage + 2); i++) {
+            pageNumbers.push(i)
+        }
+
+        return (
+            <div className="pagination-container">
+                <button
+                    className="pagination-button"
+                    disabled={activePage === 1}
+                    onClick={() => setActivePage((prev) => prev - 1)}
+                >
+                    Prev
+                </button>
+                {pageNumbers.map((page) => (
+                    <button
+                        key={page}
+                        className={`pagination-button ${activePage === page ? 'active' : ''}`}
+                        onClick={() => setActivePage(page)}
+                    >
+                        {page}
+                    </button>
+                ))}
+                <button
+                    className="pagination-button"
+                    disabled={activePage === totalPages}
+                    onClick={() => setActivePage((prev) => prev + 1)}
+                >
+                    Next
+                </button>
+            </div>
+        )
     }
 
     return (
@@ -175,7 +226,10 @@ const Jobs = () => {
                             type="button"
                             data-testid="searchButton"
                             className="search-button"
-                            onClick={getJobs}
+                            onClick={() => {
+                                setActivePage(1)
+                                getJobs()
+                            }}
                         >
                             <BsSearch className="search-icon" />
                         </button>
@@ -183,42 +237,45 @@ const Jobs = () => {
                     {isLoading ? (
                         <div style={{ color: 'white', textAlign: 'center' }}>Loading...</div>
                     ) : jobs.length > 0 ? (
-                        <ul>
-                            {jobs.map((job) => (
-                                <Link to={`/jobs/${job.jobId}`} className="job-card" key={job.jobId}>
-                                    <div className="job-card-header">
-                                        <img
-                                            src={job.companyLogoUrl}
-                                            alt="company logo"
-                                            className="company-logo"
-                                        />
-                                        <div className="job-title-container">
-                                            <h2>{job.roleName}</h2>
-                                            <div className="rating-container">
-                                                <BsStarFill className="star-icon" />
-                                                <p>{job.stars}</p>
+                        <>
+                            <ul>
+                                {jobs.map((job) => (
+                                    <Link to={`/jobs/${job.jobId}`} className="job-card" key={job.jobId}>
+                                        <div className="job-card-header">
+                                            <img
+                                                src={job.companyLogoUrl}
+                                                alt="company logo"
+                                                className="company-logo"
+                                            />
+                                            <div className="job-title-container">
+                                                <h2>{job.roleName}</h2>
+                                                <div className="rating-container">
+                                                    <BsStarFill className="star-icon" />
+                                                    <p>{job.stars}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="job-details-row">
-                                        <div style={{ display: 'flex' }}>
-                                            <div className="job-info-item">
-                                                <MdLocationOn />
-                                                <p>{job.location}</p>
+                                        <div className="job-details-row">
+                                            <div style={{ display: 'flex' }}>
+                                                <div className="job-info-item">
+                                                    <MdLocationOn />
+                                                    <p>{job.location}</p>
+                                                </div>
+                                                <div className="job-info-item">
+                                                    <BsBriefcaseFill />
+                                                    <p>{job.employmentType}</p>
+                                                </div>
                                             </div>
-                                            <div className="job-info-item">
-                                                <BsBriefcaseFill />
-                                                <p>{job.employmentType}</p>
-                                            </div>
+                                            <p>{job.salary} LPA</p>
                                         </div>
-                                        <p>{job.salary} LPA</p>
-                                    </div>
-                                    <hr style={{ borderColor: '#475569', marginBottom: '15px' }} />
-                                    <h1 className="job-description-heading">Description</h1>
-                                    <p className="job-description">{job.jobDescription}</p>
-                                </Link>
-                            ))}
-                        </ul>
+                                        <hr style={{ borderColor: '#475569', marginBottom: '15px' }} />
+                                        <h1 className="job-description-heading">Description</h1>
+                                        <p className="job-description">{job.jobDescription}</p>
+                                    </Link>
+                                ))}
+                            </ul>
+                            {renderPagination()}
+                        </>
                     ) : (
                         <div className="no-jobs-view">
                             <img

@@ -2,12 +2,28 @@ from .models import Job
 from django.db.models import Case, When, IntegerField
 from .constants import EmploymentType
 
-def fetchJobsListFromDB():
+def fetchJobsListFromDB(min_salary=None, employment_type=None, search_role_name=None, limit=10, offset=0):
     """
-    Fetches all jobs from the database and returns a list of dictionaries
-    containing summary information.
+    Fetches jobs from the database with filtering and pagination applied at the database level.
+    Returns a tuple containing the total count of filtered jobs and the list of paginated jobs.
     """
-    jobs = Job.objects.all().values(
+    qs = Job.objects.all()
+
+    if min_salary is not None:
+        qs = qs.filter(salary__gte=min_salary)
+    
+    if employment_type:
+        qs = qs.filter(employment_type__in=employment_type)
+    
+    if search_role_name:
+        qs = qs.filter(role_name__icontains=search_role_name)
+
+    total_count = qs.count()
+    
+    # Apply pagination
+    qs = qs[offset:offset + limit]
+
+    jobs = qs.values(
         'job_id', 'role_name', 'company_logo_url', 'location', 
         'employment_type', 'salary', 'job_description', 'stars'
     )
@@ -28,7 +44,7 @@ def fetchJobsListFromDB():
             "salary": job['salary'],
             "jobDescription": job['job_description']
         })
-    return formatted_jobs
+    return total_count, formatted_jobs
 
 def fetchJobFromDB(job_id):
     """

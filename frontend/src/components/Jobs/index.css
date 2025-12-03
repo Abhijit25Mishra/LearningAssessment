@@ -198,3 +198,35 @@
 .no-jobs-desc {
     color: #cbd5e1;
 }
+
+.pagination-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.pagination-button {
+    background-color: #272727;
+    color: #ffffff;
+    border: 1px solid #475569;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-button.active {
+    background-color: #6366f1;
+    border-color: #6366f1;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: #475569;
+}
