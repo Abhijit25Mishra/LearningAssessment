@@ -1,0 +1,98 @@
+get jobs list
+
+all objects in the request are optional
+Request
+{
+	"minSalary" : 30,
+	"employmentType" : [FT, IN, FR],
+	"searchRoleName":"abc"
+}
+
+Response
+{
+	"jobs" : [
+		{
+			"jobId": "abc123",
+			"stars": 4
+			"roleName": "Devops Engineer",
+			"companyLogoUrl": "Netflix",
+			"location": "Delhi",
+			"employmentType": "Full Time",
+			"salary": 10 ,
+			"jobDescription": "......" 
+		},
+		{
+			"jobId": "abb122",
+			"stars": 5
+			"roleName": "Intern",
+			"companyLogoUrl": "Google",
+			"location": "Banglore",
+			"employmentType": "Internship",
+			"salary": 15
+			"jobDescription": "......" 
+		}
+	]
+}
+
+get job details
+
+Request
+{"jobId":"abc123"}
+
+Response
+{
+    "jobId": "abc123",
+    "roleName": "Devops Engineer",
+    "companyLogoUrl": "Netflix",
+    "location": "Delhi",
+    "employmentType": "Full Time",
+    "salary": 10 ,
+    "jobDescription": "......" 
+    "skills":["HTML5", "CSS5", "Javascript", "React JS", "Redux"]
+    "lifeAtCompanyDescription": "......"
+    "lifeAtCompanyImageUrl": "image1"
+    "companyPageUrl":"Netflix.com",
+
+}
+
+
+
+get similar jobs 
+request
+{"jobid":"abc123"}
+
+
+business logic -> fetch the details of this job, then store the company and stars, fetch top 3 jobs from db which are ordered by company and star in decending order. 
+
+response
+{
+	"similarJobs":[
+		{
+			"jobid":"xyz123",
+			"roleName":"Data Scientist",
+			"companyLogoUrl" : "FaceBook",
+			"stars": 4,
+			"jobDescription":"......",
+			"location":"delhi",
+			"employmentType": "Full Time"		
+		},
+		{
+			"jobid":"xyz123",
+			"roleName":"Data Scientist",
+			"companyLogoUrl" : "FaceBook",
+			"stars": 4,
+			"jobDescription":"......",
+			"location":"delhi",
+			"employmentType": "Full Time"
+		},
+		{
+			"jobid":"xyz123",
+			"roleName":"Data Scientist",
+			"companyLogoUrl" : "FaceBook",
+			"stars": 4,
+			"jobDescription":"......",
+			"location":"delhi",
+			"employmentType": "Full Time"
+		}
+	]
+}
